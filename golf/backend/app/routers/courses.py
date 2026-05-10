@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ..database import get_db
@@ -18,6 +19,11 @@ def list_courses(db: Session = Depends(get_db)) -> list[Course]:
 def create_course(course_in: CourseCreate, db: Session = Depends(get_db)) -> Course:
     course = Course(**course_in.model_dump())
     db.add(course)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="course name already exists") from exc
+
     db.refresh(course)
     return course
