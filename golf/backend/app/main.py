@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import os
 from datetime import date
 
 from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
@@ -20,6 +22,14 @@ from .schemas import (
 
 
 app = FastAPI(title="Golf Backend API", version="0.1.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=os.getenv("CORS_ALLOW_ORIGINS", "*").split(","),
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def get_round_or_404(db: Session, round_id: int) -> Round:
@@ -128,18 +138,27 @@ def add_hole_score(
             detail="score already exists for this hole",
         )
 
-    db.add(
-        HoleScore(
-            round_id=round_id,
-            hole_number=score_in.hole_number,
-            strokes=score_in.strokes,
-        )
+    hole_score = HoleScore(
+        round_id=round_id,
+        hole_number=score_in.hole_number,
+        strokes=score_in.strokes,
     )
-    db.flush()
-    total_score = db.scalar(
-        select(func.coalesce(func.sum(HoleScore.strokes), 0)).where(HoleScore.round_id == round_id)
-    )
-    round_obj.total_score = int(total_score or 0)
 
-    db.commit()
+    try:
+        db.add(hole_score)
+        db.flush()
+        total_score = db.scalar(
+            select(func.coalesce(func.sum(HoleScore.strokes), 0)).where(
+                HoleScore.round_id == round_id
+            )
+        )
+        round_obj.total_score = int(total_score or 0)
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="score already exists for this hole",
+        ) from exc
+
     return get_round_or_404(db, round_id)
