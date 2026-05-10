@@ -25,28 +25,28 @@ Minimal dashboard with a larger full-stack golf demo flow.
 - Node.js and npm
 - Python 3.10+
 
-## Install
+## Install the dashboard
 
 ```bash
 npm install
+```
+
+## Run the backend API
+
+```bash
+cd golf/backend
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt
-```
-
-## Run the API
-
-```bash
-. .venv/bin/activate
-uvicorn api.main:app --reload --host 0.0.0.0 --port 8787
+alembic upgrade head
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8787
 ```
 
 The API stores data in `golf_scores.db` by default and migrates older local demo databases in place.
 
 Optional API environment variables:
 
-- `GOLF_DB_PATH`: SQLite database path. Defaults to `golf_scores.db`.
-- `CORS_ALLOW_ORIGINS`: comma-separated allowed origins. Defaults to `*`.
+- `GOLF_DATABASE_URL`: SQLAlchemy database URL. Defaults to the local SQLite database.
 
 ## Run the dashboard
 
