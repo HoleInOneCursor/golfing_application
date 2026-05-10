@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date as date_type
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -29,7 +29,7 @@ class RoundCreate(BaseModel):
 
     course_id: int = Field(ge=1)
     player_name: str = Field(min_length=1, max_length=120)
-    date: date | None = None
+    date: date_type | None = None
 
 
 class HoleScoreCreate(BaseModel):
@@ -52,7 +52,7 @@ class RoundRead(BaseModel):
     id: int
     course_id: int
     player_name: str
-    date: date
+    date: date_type
     total_score: int
 
 

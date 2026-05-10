@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date as date_type
 
 from sqlalchemy import CheckConstraint, Date, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -41,7 +41,7 @@ class Round(Base):
         index=True,
     )
     player_name: Mapped[str] = mapped_column(String(120), nullable=False)
-    date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    date: Mapped[date_type] = mapped_column(Date, nullable=False, index=True)
     total_score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     course: Mapped[Course] = relationship(back_populates="rounds")
