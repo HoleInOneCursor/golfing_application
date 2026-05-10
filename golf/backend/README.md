@@ -1,0 +1,38 @@
+# Golf Backend
+
+FastAPI backend for golf courses, rounds, and per-hole scores. Data is stored in
+SQLite via SQLAlchemy, with schema changes managed by Alembic.
+
+## Install
+
+```bash
+cd golf/backend
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
+```
+
+## Configure
+
+The API uses `golf/backend/golf.db` by default. To use a different database URL:
+
+```bash
+export GOLF_DATABASE_URL=sqlite:////absolute/path/to/golf.db
+```
+
+## Migrate and run
+
+```bash
+alembic upgrade head
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8787
+```
+
+## Endpoints
+
+- `GET /health`
+- `GET /api/courses`
+- `POST /api/courses`
+- `GET /api/rounds`
+- `POST /api/rounds`
+- `GET /api/rounds/{id}`
+- `POST /api/rounds/{id}/scores`

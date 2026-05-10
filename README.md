@@ -13,28 +13,28 @@ Minimal dashboard with a full-stack golf score tracker.
 - Node.js and npm
 - Python 3.10+
 
-## Install
+## Install the dashboard
 
 ```bash
 npm install
+```
+
+## Run the backend API
+
+```bash
+cd golf/backend
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt
+alembic upgrade head
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8787
 ```
 
-## Run the API
-
-```bash
-. .venv/bin/activate
-uvicorn api.main:app --reload --host 0.0.0.0 --port 8787
-```
-
-The API stores data in `golf_scores.db` by default.
+The API stores data in `golf/backend/golf.db` by default.
 
 Optional API environment variables:
 
-- `GOLF_DB_PATH`: SQLite database path. Defaults to `golf_scores.db`.
-- `CORS_ALLOW_ORIGINS`: comma-separated allowed origins. Defaults to `*`.
+- `GOLF_DATABASE_URL`: SQLAlchemy database URL. Defaults to the local SQLite database.
 
 ## Run the dashboard
 
@@ -54,10 +54,9 @@ The golf tracker reads the API URL from `NEXT_PUBLIC_DASHBOARD_API_BASE`.
 ## API overview
 
 - `GET /health`
-- `GET /courses`
-- `POST /courses`
-- `GET /courses/{course_id}`
-- `GET /rounds`
-- `POST /rounds`
-- `GET /rounds/{round_id}`
-- `PUT /rounds/{round_id}/scores/{hole_number}`
+- `GET /api/courses`
+- `POST /api/courses`
+- `GET /api/rounds`
+- `POST /api/rounds`
+- `GET /api/rounds/{round_id}`
+- `POST /api/rounds/{round_id}/scores`

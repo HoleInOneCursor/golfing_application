@@ -2,6 +2,8 @@ __pycache__/
 *.py[cod]
 .venv/
 golf_scores.db
+golf/backend/.venv/
+golf/backend/*.db
 
 node_modules/
 .next/
