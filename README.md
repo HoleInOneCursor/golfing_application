@@ -46,7 +46,6 @@ The API stores data in `golf_scores.db` by default and migrates older local demo
 Optional API environment variables:
 
 - `GOLF_DB_PATH`: SQLite database path. Defaults to `golf_scores.db`.
-- `CORS_ALLOW_ORIGINS`: comma-separated allowed origins. Defaults to `*`.
 
 ## Run the dashboard
 
