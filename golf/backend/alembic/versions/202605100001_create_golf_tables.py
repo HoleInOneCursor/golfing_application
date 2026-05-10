@@ -37,14 +37,14 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("course_id", sa.Integer(), nullable=False),
         sa.Column("player_name", sa.String(length=120), nullable=False),
-        sa.Column("date", sa.Date(), nullable=False),
-        sa.Column("total_score", sa.Integer(), nullable=False, server_default="0"),
-        sa.CheckConstraint("total_score >= 0", name="ck_rounds_total_score_nonnegative"),
+        sa.Column("date_played", sa.Date(), nullable=False),
+        sa.Column("score", sa.Integer(), nullable=False, server_default="0"),
+        sa.CheckConstraint("score >= 0", name="ck_rounds_score_nonnegative"),
         sa.ForeignKeyConstraint(["course_id"], ["courses.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(op.f("ix_rounds_course_id"), "rounds", ["course_id"], unique=False)
-    op.create_index(op.f("ix_rounds_date"), "rounds", ["date"], unique=False)
+    op.create_index(op.f("ix_rounds_date_played"), "rounds", ["date_played"], unique=False)
     op.create_index(op.f("ix_rounds_id"), "rounds", ["id"], unique=False)
 
     op.create_table(
@@ -69,7 +69,7 @@ def downgrade() -> None:
     op.drop_table("hole_scores")
 
     op.drop_index(op.f("ix_rounds_id"), table_name="rounds")
-    op.drop_index(op.f("ix_rounds_date"), table_name="rounds")
+    op.drop_index(op.f("ix_rounds_date_played"), table_name="rounds")
     op.drop_index(op.f("ix_rounds_course_id"), table_name="rounds")
     op.drop_table("rounds")
 

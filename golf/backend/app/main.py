@@ -60,6 +60,15 @@ def list_courses(db: Session = Depends(get_db)) -> list[Course]:
     tags=["courses"],
 )
 def create_course(course_in: CourseCreate, db: Session = Depends(get_db)) -> Course:
+    existing_course_id = db.scalar(
+        select(Course.id).where(Course.name == course_in.name)
+    )
+    if existing_course_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="course name already exists",
+        )
+
     course = Course(**course_in.model_dump())
     db.add(course)
     try:

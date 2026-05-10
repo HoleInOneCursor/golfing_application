@@ -31,7 +31,7 @@ class Course(Base):
 class Round(Base):
     __tablename__ = "rounds"
     __table_args__ = (
-        CheckConstraint("total_score >= 0", name="ck_rounds_total_score_nonnegative"),
+        CheckConstraint("score >= 0", name="ck_rounds_score_nonnegative"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
@@ -41,8 +41,18 @@ class Round(Base):
         index=True,
     )
     player_name: Mapped[str] = mapped_column(String(120), nullable=False)
-    date: Mapped[date_type] = mapped_column(Date, nullable=False, index=True)
-    total_score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    date: Mapped[date_type] = mapped_column(
+        "date_played",
+        Date,
+        nullable=False,
+        index=True,
+    )
+    total_score: Mapped[int] = mapped_column(
+        "score",
+        Integer,
+        nullable=False,
+        default=0,
+    )
 
     course: Mapped[Course] = relationship(back_populates="rounds")
     hole_scores: Mapped[list["HoleScore"]] = relationship(
