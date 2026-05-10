@@ -37,3 +37,9 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
+
+def init_db() -> None:
+    from . import models  # noqa: F401
+
+    Base.metadata.create_all(bind=engine)

@@ -1,7 +1,7 @@
 # Golf Backend
 
-FastAPI backend for golf courses, rounds, and per-hole scores. Data is stored in
-SQLite via SQLAlchemy, with schema changes managed by Alembic.
+FastAPI backend for golf courses and rounds. Data is stored in SQLite via
+SQLAlchemy, with tables created automatically on application startup.
 
 ## Install
 
@@ -20,10 +20,9 @@ The API uses `golf/backend/golf.db` by default. To use a different database URL:
 export GOLF_DATABASE_URL=sqlite:////absolute/path/to/golf.db
 ```
 
-## Migrate and run
+## Run
 
 ```bash
-alembic upgrade head
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8787
 ```
 
@@ -33,6 +32,5 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8787
 - `GET /api/courses`
 - `POST /api/courses`
 - `GET /api/rounds`
+- `GET /api/rounds?course_id=1`
 - `POST /api/rounds`
-- `GET /api/rounds/{id}`
-- `POST /api/rounds/{id}/scores`
