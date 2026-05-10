@@ -6,7 +6,7 @@ import sqlite3
 from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Annotated, Any, Iterator
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -697,7 +697,7 @@ def upsert_score(round_id: int, hole_number: int, score: ScoreUpdate) -> dict[st
 
 
 @app.get("/activity")
-def list_activity(limit: int = Query(default=20, ge=1, le=100)) -> list[dict[str, Any]]:
+def list_activity(limit: Annotated[int, Query(ge=1, le=100)] = 20) -> list[dict[str, Any]]:
     with get_db() as conn:
         rows = conn.execute(
             """
