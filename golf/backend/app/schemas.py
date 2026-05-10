@@ -29,21 +29,8 @@ class RoundCreate(BaseModel):
 
     course_id: int = Field(ge=1)
     player_name: str = Field(min_length=1, max_length=120)
-    date: date_type | None = None
-
-
-class HoleScoreCreate(BaseModel):
-    hole_number: int = Field(ge=1, le=18)
-    strokes: int = Field(ge=1, le=30)
-
-
-class HoleScoreRead(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    round_id: int
-    hole_number: int
-    strokes: int
+    score: int = Field(ge=0)
+    date_played: date_type
 
 
 class RoundRead(BaseModel):
@@ -52,9 +39,5 @@ class RoundRead(BaseModel):
     id: int
     course_id: int
     player_name: str
-    date: date_type
-    total_score: int
-
-
-class RoundDetail(RoundRead):
-    hole_scores: list[HoleScoreRead]
+    score: int
+    date_played: date_type
