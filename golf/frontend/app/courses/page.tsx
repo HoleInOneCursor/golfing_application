@@ -1,30 +1,32 @@
-import { API_BASE_URL } from "@/lib/api";
+import Link from "next/link";
+
+import { CoursesList } from "./courses-list";
 
 export default function CoursesPage() {
   return (
-    <section className="space-y-6">
-      <div>
-        <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">
-          Courses
-        </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight">
-          Golf courses
-        </h1>
-        <p className="mt-3 max-w-2xl text-slate-600">
-          Course data is available through the shared API helpers in{" "}
-          <code className="rounded bg-white px-1.5 py-0.5 text-sm ring-1 ring-slate-200">
-            lib/api.ts
-          </code>
-          .
-        </p>
+    <section className="space-y-8">
+      <div className="flex flex-col gap-5 rounded-3xl bg-gradient-to-br from-emerald-900 via-emerald-800 to-lime-700 p-8 text-white shadow-sm sm:flex-row sm:items-end sm:justify-between sm:p-10">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-lime-200">
+            Courses
+          </p>
+          <h1 className="mt-3 text-4xl font-bold tracking-tight">
+            Golf courses
+          </h1>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-emerald-50">
+            Keep your favorite layouts organized with the essentials for every
+            round: location, hole count, and total par.
+          </p>
+        </div>
+        <Link
+          href="/courses/new"
+          className="inline-flex items-center justify-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-emerald-900 shadow-sm transition hover:bg-lime-50"
+        >
+          Add course
+        </Link>
       </div>
 
-      <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-        <h2 className="text-lg font-semibold">Endpoint</h2>
-        <p className="mt-2 font-mono text-sm text-slate-600">
-          GET {API_BASE_URL}/courses
-        </p>
-      </div>
+      <CoursesList />
     </section>
   );
 }
