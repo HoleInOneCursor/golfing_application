@@ -90,6 +90,11 @@ code {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
+.grid.three {
+  align-items: end;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
 .card,
 .notice {
   border: 1px solid var(--border);
@@ -157,6 +162,64 @@ code {
   padding: 0.45rem 0.75rem;
 }
 
+.golf-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.golf-nav a,
+.pill,
+.summary-strip span,
+.tee-list span {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--primary);
+  padding: 0.45rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.stats-row div {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+  padding: 1rem;
+}
+
+.stats-row strong {
+  display: block;
+  font-size: 2rem;
+}
+
+.stats-row span,
+.round-preview span {
+  color: var(--muted);
+}
+
+.pill-list,
+.tee-list,
+.summary-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.pill {
+  display: inline-flex;
+}
+
 .section-heading,
 .round-summary {
   display: flex;
@@ -166,7 +229,8 @@ code {
 }
 
 .course-list,
-.round-list {
+.round-list,
+.activity-feed {
   display: grid;
   gap: 1rem;
 }
@@ -181,6 +245,14 @@ code {
 .course p,
 .round p {
   color: var(--muted);
+}
+
+.round-preview {
+  display: grid;
+  gap: 0.25rem;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  padding: 0.8rem;
 }
 
 .holes,
@@ -217,7 +289,8 @@ code {
   gap: 0.45rem;
 }
 
-.score-cell span {
+.score-cell span,
+.score-cell strong {
   color: var(--muted);
   font-size: 0.85rem;
   font-weight: 800;
@@ -227,4 +300,26 @@ code {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.4rem;
+}
+
+.activity-feed {
+  margin: 0;
+  padding-left: 1.3rem;
+}
+
+.activity-feed li {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.7rem;
+}
+
+.activity-feed li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.activity-feed span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
 }
