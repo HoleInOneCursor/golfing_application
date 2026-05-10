@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { ApiError, getCourses } from "@/lib/api";
 import type { Course } from "@/lib/api";
@@ -30,7 +30,7 @@ export function CoursesList() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const loadCourses = useCallback(async () => {
+  async function reloadCourses() {
     setIsLoading(true);
     setErrorMessage(null);
 
@@ -41,11 +41,38 @@ export function CoursesList() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }
 
   useEffect(() => {
-    void loadCourses();
-  }, [loadCourses]);
+    let isActive = true;
+
+    async function loadInitialCourses() {
+      try {
+        const nextCourses = await getCourses();
+
+        if (!isActive) {
+          return;
+        }
+
+        setCourses(nextCourses);
+        setErrorMessage(null);
+      } catch (error) {
+        if (isActive) {
+          setErrorMessage(getErrorMessage(error));
+        }
+      } finally {
+        if (isActive) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadInitialCourses();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   if (isLoading) {
     return (
@@ -70,7 +97,7 @@ export function CoursesList() {
         <p className="mt-2 text-sm">{errorMessage}</p>
         <button
           type="button"
-          onClick={loadCourses}
+          onClick={() => void reloadCourses()}
           className="mt-5 rounded-full bg-red-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800"
         >
           Try again
