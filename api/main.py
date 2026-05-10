@@ -8,13 +8,14 @@ from datetime import date
 from pathlib import Path
 from typing import Annotated, Any, Iterator
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, model_validator
 
 
 DATABASE_PATH = Path(os.getenv("GOLF_DB_PATH", "golf_scores.db"))
 SCORING_MODE = "stableford"
+DEFAULT_CORS_ORIGINS = "http://localhost:3000"
 
 
 class HoleIn(BaseModel):
@@ -90,9 +91,17 @@ class ScoreUpdate(BaseModel):
 
 app = FastAPI(title="Golf Score Tracker API")
 
+
+def configured_cors_origins() -> list[str]:
+    return [
+        origin.strip()
+        for origin in os.getenv("CORS_ALLOW_ORIGINS", DEFAULT_CORS_ORIGINS).split(",")
+        if origin.strip()
+    ]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("CORS_ALLOW_ORIGINS", "*").split(","),
+    allow_origins=configured_cors_origins(),
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -224,7 +233,9 @@ def default_tee_sets() -> list[TeeSetIn]:
     ]
 
 
-def fetch_course(conn: sqlite3.Connection, course_id: int) -> dict[str, Any] | None:
+def fetch_course(
+    conn: sqlite3.Connection, course_id: int, include_rounds: bool = False
+) -> dict[str, Any] | None:
     course = conn.execute(
         "SELECT id, name, created_at FROM courses WHERE id = ?",
         (course_id,),
@@ -255,6 +266,17 @@ def fetch_course(conn: sqlite3.Connection, course_id: int) -> dict[str, Any] | N
     payload["holes"] = [row_to_dict(hole) for hole in holes]
     payload["tee_sets"] = [row_to_dict(tee_set) for tee_set in tee_sets]
     payload["total_par"] = sum(hole["par"] for hole in holes)
+    if include_rounds:
+        round_rows = conn.execute(
+            """
+            SELECT id
+            FROM rounds
+            WHERE course_id = ?
+            ORDER BY played_on DESC, id DESC
+            """,
+            (course_id,),
+        ).fetchall()
+        payload["rounds"] = [fetch_round(conn, row["id"]) for row in round_rows if row["id"]]
     return payload
 
 
@@ -481,11 +503,13 @@ def on_startup() -> None:
     ensure_schema()
 
 
+@app.get("/api/health")
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@app.get("/api/players")
 @app.get("/players")
 def list_players() -> list[dict[str, Any]]:
     with get_db() as conn:
@@ -495,6 +519,7 @@ def list_players() -> list[dict[str, Any]]:
         return [row_to_dict(row) for row in rows]
 
 
+@app.post("/api/players", status_code=201)
 @app.post("/players", status_code=201)
 def create_player(player: PlayerCreate) -> dict[str, Any]:
     with get_db() as conn:
@@ -516,6 +541,7 @@ def create_player(player: PlayerCreate) -> dict[str, Any]:
         return created
 
 
+@app.get("/api/courses")
 @app.get("/courses")
 def list_courses() -> list[dict[str, Any]]:
     with get_db() as conn:
@@ -523,6 +549,7 @@ def list_courses() -> list[dict[str, Any]]:
         return [fetch_course(conn, row["id"]) for row in course_rows if row["id"]]
 
 
+@app.post("/api/courses", status_code=201)
 @app.post("/courses", status_code=201)
 def create_course(course: CourseCreate) -> dict[str, Any]:
     tee_sets = course.tee_sets or default_tee_sets()
@@ -561,15 +588,35 @@ def create_course(course: CourseCreate) -> dict[str, Any]:
         return created
 
 
+@app.get("/api/courses/{course_id}")
 @app.get("/courses/{course_id}")
 def get_course(course_id: int) -> dict[str, Any]:
     with get_db() as conn:
-        course = fetch_course(conn, course_id)
+        course = fetch_course(conn, course_id, include_rounds=True)
         if course is None:
             raise HTTPException(status_code=404, detail="course not found")
         return course
 
 
+@app.delete("/api/courses/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/courses/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_course(course_id: int) -> Response:
+    with get_db() as conn:
+        course = fetch_course(conn, course_id)
+        if course is None:
+            raise HTTPException(status_code=404, detail="course not found")
+
+        conn.execute("DELETE FROM courses WHERE id = ?", (course_id,))
+        record_activity(
+            conn,
+            "course_deleted",
+            f"Deleted course {course['name']}",
+            {"course_id": course_id},
+        )
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.get("/api/rounds")
 @app.get("/rounds")
 def list_rounds() -> list[dict[str, Any]]:
     with get_db() as conn:
@@ -579,6 +626,7 @@ def list_rounds() -> list[dict[str, Any]]:
         return [fetch_round(conn, row["id"]) for row in round_rows if row["id"]]
 
 
+@app.post("/api/rounds", status_code=201)
 @app.post("/rounds", status_code=201)
 def create_round(round_data: RoundCreate) -> dict[str, Any]:
     played_on = round_data.played_on or date.today().isoformat()
@@ -646,6 +694,7 @@ def create_round(round_data: RoundCreate) -> dict[str, Any]:
         return created
 
 
+@app.get("/api/rounds/{round_id}")
 @app.get("/rounds/{round_id}")
 def get_round(round_id: int) -> dict[str, Any]:
     with get_db() as conn:
@@ -655,6 +704,73 @@ def get_round(round_id: int) -> dict[str, Any]:
         return round_payload
 
 
+@app.delete("/api/rounds/{round_id}", status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/rounds/{round_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_round(round_id: int) -> Response:
+    with get_db() as conn:
+        round_payload = fetch_round(conn, round_id)
+        if round_payload is None:
+            raise HTTPException(status_code=404, detail="round not found")
+
+        conn.execute("DELETE FROM rounds WHERE id = ?", (round_id,))
+        record_activity(
+            conn,
+            "round_deleted",
+            f"Deleted round for {round_payload['player_name']} at {round_payload['course_name']}",
+            {"round_id": round_id, "course_id": round_payload["course_id"]},
+        )
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.get("/api/stats/leaderboard")
+@app.get("/stats/leaderboard")
+def leaderboard() -> list[dict[str, Any]]:
+    with get_db() as conn:
+        rows = conn.execute(
+            """
+            WITH round_totals AS (
+                SELECT
+                    rounds.id AS round_id,
+                    rounds.player_id,
+                    COALESCE(players.name, rounds.player_name) AS player_name,
+                    SUM(scores.strokes) AS total_strokes,
+                    COUNT(scores.id) AS holes_scored
+                FROM rounds
+                JOIN scores ON scores.round_id = rounds.id
+                LEFT JOIN players ON players.id = rounds.player_id
+                GROUP BY rounds.id
+                HAVING COUNT(scores.id) > 0
+            )
+            SELECT
+                player_id,
+                player_name,
+                COUNT(round_id) AS rounds_played,
+                ROUND(AVG(total_strokes), 2) AS average_score,
+                MIN(total_strokes) AS best_score,
+                MAX(total_strokes) AS worst_score,
+                SUM(holes_scored) AS holes_scored
+            FROM round_totals
+            GROUP BY player_id, lower(player_name), player_name
+            ORDER BY average_score ASC, rounds_played DESC, lower(player_name) ASC
+            """
+        ).fetchall()
+
+    leaders: list[dict[str, Any]] = []
+    previous_average: float | None = None
+    previous_rank = 0
+    for index, row in enumerate(rows, start=1):
+        item = row_to_dict(row)
+        average_score = float(item["average_score"])
+        rank = previous_rank if previous_average == average_score else index
+        item["rank"] = rank
+        item["average_score"] = average_score
+        leaders.append(item)
+        previous_average = average_score
+        previous_rank = rank
+    return leaders
+
+
+@app.put("/api/rounds/{round_id}/scores/{hole_number}")
 @app.put("/rounds/{round_id}/scores/{hole_number}")
 def upsert_score(round_id: int, hole_number: int, score: ScoreUpdate) -> dict[str, Any]:
     with get_db() as conn:
@@ -696,6 +812,7 @@ def upsert_score(round_id: int, hole_number: int, score: ScoreUpdate) -> dict[st
         return updated
 
 
+@app.get("/api/activity")
 @app.get("/activity")
 def list_activity(limit: Annotated[int, Query(ge=1, le=100)] = 20) -> list[dict[str, Any]]:
     with get_db() as conn:

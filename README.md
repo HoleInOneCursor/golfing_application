@@ -46,7 +46,14 @@ The API stores data in `golf_scores.db` by default and migrates older local demo
 Optional API environment variables:
 
 - `GOLF_DB_PATH`: SQLite database path. Defaults to `golf_scores.db`.
-- `CORS_ALLOW_ORIGINS`: comma-separated allowed origins. Defaults to `*`.
+- `CORS_ALLOW_ORIGINS`: comma-separated allowed origins. Defaults to `http://localhost:3000`.
+
+## Seed sample golf data
+
+```bash
+. .venv/bin/activate
+python seed.py
+```
 
 ## Run the dashboard
 
@@ -71,8 +78,14 @@ The golf tracker reads the API URL from `NEXT_PUBLIC_DASHBOARD_API_BASE`.
 - `GET /courses`
 - `POST /courses`
 - `GET /courses/{course_id}`
+- `DELETE /courses/{course_id}`
 - `GET /rounds`
 - `POST /rounds`
 - `GET /rounds/{round_id}`
+- `DELETE /rounds/{round_id}`
 - `PUT /rounds/{round_id}/scores/{hole_number}`
+- `GET /stats/leaderboard`
 - `GET /activity`
+
+All API routes above are also available under the `/api` prefix, for example
+`GET /api/courses/{course_id}` and `GET /api/stats/leaderboard`.
